@@ -6,6 +6,7 @@
         <div class=" slds-size-1-of-1" >
             <ui:outputText value="{!v.item.Description__c}"/>
         </div>
+        <br/>
         <div class="slds-size-1-of-1" > 
             <b>Quantity:</b> <ui:outputText value="{!v.item.Quantity__c}"/>
         </div>
