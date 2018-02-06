@@ -59,9 +59,6 @@
                   <ui:inputText value="{!v.searchText}" class="slds-lookup__search-input slds-input" placeholder="Search" />
                 </div>
                 <div class="slds-size-1-1">
-                    <lightning:slider step=".5" value="{!v.myval}" onchange="{!c.handleChangeEvent}" min="0" max="50"/>
-                </div>  
-                <div class="slds-size-1-1">
                     <lightning:select name="select" label="Select a Color" value="{!v.colors}">
                         <option value="">-- None --</option>
                         <aura:iteration items="{!v.colors}" var="item">
@@ -69,6 +66,10 @@
                         </aura:iteration>
                     </lightning:select>
                 </div>  
+                <div class="slds-size-1-1">
+                    <lightning:slider step=".5" value="{!v.myval}" onchange="{!c.handleChangeEvent}" min="0" max="50"/>
+                </div>                
+                <br/>
                 <div class="slds-size-1-1 slds-wrap">
                     <aura:renderIf isTrue="{!v.item}">                        
                     	 <c:FlowerDescription item="{!v.item}"/> 
