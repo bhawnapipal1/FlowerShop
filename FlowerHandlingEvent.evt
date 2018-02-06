@@ -1,0 +1,3 @@
+<aura:event type="COMPONENT" description="Event template" >
+    <aura:attribute name="message" type="Flowers_Master__c"/>
+</aura:event>
