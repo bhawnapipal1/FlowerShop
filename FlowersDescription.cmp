@@ -1,0 +1,12 @@
+<aura:component >
+    <aura:attribute name="item" type="Flowers_Master__c"/> 
+        <div class="slds-size-1-of-1" >
+           <b> Flower Description:</b>
+        </div>
+        <div class=" slds-size-1-of-1" >
+            <ui:outputText value="{!v.item.Description__c}"/>
+        </div>
+        <div class="slds-size-1-of-1" > 
+            <b>Quantity:</b> <ui:outputText value="{!v.item.Quantity__c}"/>
+        </div>
+</aura:component>

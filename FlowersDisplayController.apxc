@@ -1,0 +1,150 @@
+/*
+	@author: Bhawna Pipal
+	This class handles business logic of flower display component
+*/
+public with sharing class FlowersDisplayController {  
+    
+    public class flowerWrapper{
+        @AuraEnabled public Flowers_Master__c objFW{get;set;}
+        @AuraEnabled public string contentVersionId{get;set;}
+    }
+    
+    @AuraEnabled
+    public static List<String> searchForIds(String searchText) {
+      return new List<String>{searchText};
+    }
+    
+    public class FlowerPagerWrapper {
+        @AuraEnabled public List<flowerWrapper> lstFlowerWrapper {get;set;}
+        @AuraEnabled public integer offst{get;set;}
+        @AuraEnabled public boolean hasprev{get;set;}    
+        @AuraEnabled public boolean hasnext{get;set;}
+    }
+    
+    @AuraEnabled
+    public static FlowerPagerWrapper fetchFlowers(boolean next,boolean prev,decimal off,String searchText, integer intPrice, string SelectedColor) {
+		
+		offset = (integer)off;
+          
+		// create a instance of wrapper class.
+		FlowerPagerWrapper obj =  new FlowerPagerWrapper();		
+          
+		map<Id,Id> mpParentToDocumentId = new map<Id,Id>();
+		map<Id,Id> mpDocumentToVersionId = new map<Id,Id>();
+		list<flowerWrapper> lstWrapper = new list<flowerWrapper>();
+		system.debug('searchText::'+searchText);
+		system.debug('intPrice='+intPrice);
+		system.debug('SelectedColor='+SelectedColor);
+		
+		string strQuery = 'select id, name, Color__c, Description__c, Image__c  , Price__c, Quantity__c from Flowers_Master__c';
+            
+		if(searchText!='' && searchText!=null && searchText !=' ' ){system.debug('searchText ---'+searchText );
+			strQuery += ' where name LIKE  \'%' + searchText + '%\'';
+			strQuery += ' OR Color__c LIKE  \'%' + searchText + '%\'';
+			
+			if(intPrice!=null && intPrice!=0)
+				strQuery += ' And Price__c= ' + intPrice ;
+			
+			if(SelectedColor !=null && SelectedColor!='')
+				strQuery += ' AND Color__c ='+SelectedColor;
+		}else if((searchText==null || searchText=='') && intPrice!=null && intPrice!=0){system.debug('in--intprice:'+intPrice);
+			strQuery += ' where Price__c= ' + intPrice ;
+			if(SelectedColor !=null && SelectedColor!='')
+				strQuery += ' AND Color__c = \''+SelectedColor+ '\'';
+		}else if((searchText==null || searchText=='') && (intPrice==null || intPrice==0)
+					&& SelectedColor!=null && SelectedColor != ''){
+				strQuery += ' where Color__c= \'' +SelectedColor + '\'';
+		}
+		
+		integer listlength = database.query(strQuery).size();
+            
+		if(next==false && prev==false){system.debug('bhawna--false--');
+			strQuery += ' LIMIT '+pagesize +' OFFSET '+offset; //' ORDER BY Name LIMIT '+recordToDisply + ' OFFSET '+offset;
+		}else if(next==true && (offset+pagesize)<=listlength){
+			  offset=offset+pagesize;
+			  strQuery += ' LIMIT '+pagesize +' OFFSET '+offset;
+		}else if(prev==true && offset>0){
+			  offset=offset-pagesize;
+			  strQuery += ' LIMIT '+pagesize +' OFFSET '+offset;
+		}
+		system.debug('strQuery:: '+strQuery);
+		list<Flowers_Master__c> lstFM = database.query(strQuery);
+		system.debug('lstfm:'+lstFM);
+		set<Id> setFMID = new set<Id>();
+		for(Flowers_Master__c objFM: lstFM){
+			setFMID.add(objFM.Id);
+		}
+		system.debug('setFMID::'+setFMID);        
+		if(setFMID!=null && setFMID.size()>0){
+			list<ContentDocumentLink> lstCDL = [SELECT ContentDocumentId,Id,IsDeleted,LinkedEntityId,ShareType,SystemModstamp,Visibility 
+													FROM ContentDocumentLink 
+													where LinkedEntityId IN: setFMID];
+			system.debug('lstCDL'+lstCDL);
+			if(lstCDL!=null && lstCDL.size()>0){
+				set<Id> setCDIds=  new set<Id>();
+				for(ContentDocumentLink objCDL: lstCDL){
+				   // setCDIds.add(objCDL.ContentDocumentId);
+					mpParentToDocumentId.put(objCDL.LinkedEntityId, objCDL.ContentDocumentId);
+				}
+				
+				if(mpParentToDocumentId !=null && mpParentToDocumentId.size()>0){
+					list<ContentVersion> lstCV =[SELECT Id,ContentDocumentId,Title FROM ContentVersion WHERE ContentDocumentId in: mpParentToDocumentId.values()];
+					if(lstCV !=null && lstCV.size()>0){
+						for(ContentVersion objCV: lstCV){
+							mpDocumentToVersionId.put(objCV.ContentDocumentId, objCV.Id);
+						}
+					}
+				}
+				
+				for(Flowers_Master__c objFM: lstFM){
+					flowerWrapper objWrap = new flowerWrapper();
+					objwrap.objFW = objFM;
+					objwrap.contentVersionId = mpDocumentToVersionId.get(mpParentToDocumentId.get(objFM.Id));
+					system.debug(objwrap.contentVersionId);                
+					lstWrapper.add(objwrap);
+				}
+			}  
+		}
+             
+		obj.lstFlowerWrapper = lstWrapper;
+		obj.offst = offset;
+		obj.hasprev = hasprev(offset);  		
+		obj.hasnext = hasnxt(offset,listlength,pagesize);
+        
+		// return the wrapper class instance .
+		return obj;
+	}
+        
+	private static integer pagesize=9;
+	private static integer offset;
+        
+	private static boolean hasprev(integer off){
+		if(off>0)
+		return false;
+		return true; 
+	}
+        
+	private static boolean hasnxt(integer off,integer li,integer ps){
+		if(off+ps<li)
+			return false;
+		return true;
+	} 
+	
+	@AuraEnabled 
+    public static List<string> getColors()
+    {
+		List<string> options = new List<string>();
+        
+		Schema.DescribeFieldResult fieldResult =
+		Flowers_Master__c.Color__c	.getDescribe();
+		List<Schema.PicklistEntry> ple = fieldResult.getPicklistValues();
+			
+		for( Schema.PicklistEntry f : ple)
+		{
+		  options.add(f.getValue());
+		}       
+		system.debug('options'+options);
+		options.sort();
+		return options;
+    }
+}

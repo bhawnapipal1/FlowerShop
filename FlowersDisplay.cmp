@@ -1,0 +1,93 @@
+<!-- 
+	@author: Bhawna Pipal
+	Description:	
+	1. Component to display flowers and search flower on basis of filter of text, price and colors.
+	2. Display description of flower if particular image is clicked.
+	3. Pagination
+-->
+<aura:component controller="FlowersDisplayController" implements="forceCommunity:searchInterface">
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <!-- <aura:attribute name="displayFlowers" type="FlowersDisplayController.flowerWrapper[]"/>-->
+    <aura:attribute name="displayFlowers" type="FlowersDisplayController.FlowerPagerWrapper"/>
+    <aura:attribute name="prefixURL" type="String" default="/sfc/servlet.shepherd/version/download/"/>
+	<aura:attribute name="searchText" type="String" default=""/>
+    <aura:attribute name="myval" default="10" type="Integer"/>
+    <aura:attribute name="colors" type="List" default=""/>
+    <aura:handler name="change" value="{!v.colors}" action="{!c.handleClick}"/>  
+    <aura:attribute name="item" type="Flowers_Master__c"/>    
+    <aura:attribute name="flower" type="FlowersDisplayController.flowerWrapper" />
+    <aura:attribute name="index" type="integer"/>
+    <aura:registerEvent name="showDescriptionEvent" type="c:FlowerHandlingEvent"/>
+    <aura:handler name="showDescriptionEvent" 
+                  event="c:FlowerHandlingEvent" 
+                  action="{!c.handleClick1}"/>    
+    <aura:attribute name="profileName" type="String"/>
+    <aura:attribute name="offset" type="integer" />     
+    <aura:attribute name="next" type="boolean" />
+    <aura:attribute name="prev" type="boolean" />
+
+ <style>
+  .flowerList img{width:180px !important; height:170px !important;}   
+ </style>
+    
+  <div class="slds slds-p-horizontal--medium">  
+   <div class="slds-grid slds-wrap">
+      
+    <div class="slds-p-horizontal--medium slds-large-size--9-of-12 slds-medium-size--9-of-12 slds-small-size--9-of-12" >
+        <div class="slds-large-size--12-of-12 slds-medium-size--12-of-12 slds-small-size--12-of-12" >            
+              <div class="slds-grid slds-wrap flowerList">
+                  
+                  <aura:iteration items="{!v.displayFlowers.lstFlowerWrapper}" var="flowerVar" indexVar="index">                      
+                      <div class="slds-p-horizontal--small slds-large-size--4-of-12 slds-medium-size--4-of-12 slds-small-size--4-of-12">
+                        <img data-id="{!index}" onclick="{!c.imgClick}" src="{!'/sfc/servlet.shepherd/version/download/'+ flowerVar.contentVersionId}" width="200" height="200" />
+                        <div class="slds-col slds-size_3-of-3">
+                            <span>{!flowerVar.objFW.Name} Price: ${!flowerVar.objFW.Price__c}</span>
+                        </div>
+                      </div>                               
+                  </aura:iteration>     
+              </div>
+        </div>        
+    </div>         
+      
+    <div class="slds-p-horizontal--medium slds-large-size--3-of-12 slds-medium-size--3-of-12 slds-small-size--3-of-12">
+        <!-- Search Div -->
+        <div class="slds-grid slds-gutters slds-size-1-of-3 ">
+            <div class="slds-form-element slds-lookup" data-select="single">
+              <div class="slds-form-element__control">
+                <div class="slds-input-has-icon slds-input-has-icon--right slds-size-1-of-1">
+                  <lightning:buttonIcon iconName="utility:search" variant="bare" onclick="{!c.handleClick}" alternativeText="Search" class="slds-input__icon" />
+                  <ui:inputText value="{!v.searchText}" class="slds-lookup__search-input slds-input" placeholder="Search" />
+                </div>
+                <div class="slds-size-1-1">
+                    <lightning:slider step=".5" value="{!v.myval}" onchange="{!c.handleChangeEvent}" min="0" max="50"/>
+                </div>  
+                <div class="slds-size-1-1">
+                    <lightning:select name="select" label="Select a Color" value="{!v.colors}">
+                        <option value="">-- None --</option>
+                        <aura:iteration items="{!v.colors}" var="item">
+                            <option text="{!item.label}" value="{!item.value}" selected="{!item.selected}"/>
+                        </aura:iteration>
+                    </lightning:select>
+                </div>  
+                <div class="slds-size-1-1 slds-wrap">
+                    <aura:renderIf isTrue="{!v.item}">                        
+                    	 <c:FlowerDescription item="{!v.item}"/> 
+                    </aura:renderIf>
+                </div>
+              </div>
+            </div>
+        </div> 
+    </div>
+   </div> 
+      <br/>
+      <div class="slds-grid slds-wrap">  
+            <div class="slds-text-body_regular slds-align_absolute-center slds-size-9-of-12">
+                <lightning:button disabled="{!v.prev}" onclick="{!c.Previous}"  class="slds-button slds-button--neutral" label="Previous"/>
+                <lightning:button disabled="{!v.next}" onclick="{!c.Next}"  class="slds-button slds-button--neutral" label="Next"/>                
+            </div>
+          	<div class="slds-size-3-of-12" >
+        	</div>
+      </div>
+	<br/><br/>      
+    </div>
+</aura:component>
